@@ -1,7 +1,3 @@
-# ### Load data
-
-# In[1]:
-
 import time
 import cv2
 import glob
@@ -13,9 +9,6 @@ import matplotlib.pyplot as plt
 
 im = cv2.imread('Train/0/00000_00000_00000.png') 
 print(im.shape)
-
-
-# In[2]:
 
 
 # function to read and resize images, get labels and store them into np array
@@ -31,8 +24,6 @@ filelist = glob.glob('Train/'+'0'+'/*.png')
 trainx, trainy = get_image_label_resize(0, glob.glob('Train/'+str(0)+'/*.png'))
 
 
-# In[3]:
-
 start = time.perf_counter()
 
 # go through all other labels and store images into np array
@@ -42,41 +33,13 @@ for label in range(1, 43):
     #print(x," ",y)
     trainx = np.concatenate((trainx ,x))
     trainy = np.concatenate((trainy ,y))
-# save data into a pickle to later use
-# trainx.dump('../trainx.npy')
-# trainy.dump('../trainy.npy')
-
-
-# In[11]:
-
-
-# load data from pickle
-#trainx = np.load('../Trainx.npy', allow_pickle=True)
-#trainy = np.load('../Trainy.npy', allow_pickle=True)
-
-
-# In[10]:
-
 
 # get path for test images
 testfile = pd.read_csv('Test.csv')['Path'].apply(lambda x: x).tolist()#apply(lambda x: '../' + x).tolist()
 
 X_test = np.array([cv2.resize(cv2.imread(fname), (32, 32), interpolation = cv2.INTER_AREA) for fname in testfile])
-# X_test.dump('../testx.npy')
 
 y_test = np.array(pd.read_csv('Test.csv')['ClassId'])
-# y_test.dump('../testy.npy')
-
-
-# In[12]:
-
-
-# load data from pickle
-#X_test = np.load('../testx.npy', allow_pickle=True)
-#y_test = np.load('../testy.npy', allow_pickle=True)
-
-
-# In[13]:
 
 
 # shuffle training data and split them into training and validation
@@ -86,9 +49,6 @@ split_idx = int(trainx.shape[0]*0.8)
 train_idx, val_idx = indices[:split_idx], indices[split_idx:]
 X_train, X_validation = trainx[train_idx,:], trainx[val_idx,:]
 y_train, y_validation = trainy[train_idx], trainy[val_idx]
-
-
-# In[14]:
 
 
 # get overall stat of the whole dataset
@@ -104,9 +64,6 @@ print("Image data shape is {}".format(image_shape))
 print("There are {} classes".format(n_classes))
 
 
-# In[15]:
-
-
 # convert the images to grayscale
 X_train_gry = np.sum(X_train/3, axis=3, keepdims=True)
 X_validation_gry = np.sum(X_validation/3, axis=3, keepdims=True)
@@ -117,8 +74,6 @@ X_train_normalized_gry = (X_train_gry-128)/128
 X_validation_normalized_gry = (X_validation_gry-128)/128
 X_test_normalized_gry = (X_test_gry-128)/128
 
-
-# In[23]:
 
 
 #get_ipython().run_line_magic('matplotlib', 'inline')
@@ -137,16 +92,11 @@ ax[1].set_title('norm_gry ' + sign.loc[sign['ClassId'] ==y_train[index], 'SignNa
 ax[1].imshow(X_train_normalized_gry[index].squeeze(), cmap='gray')
 
 
-# In[9]:
-
-
 # update the train, val and test data with normalized gray images
 X_train = X_train_normalized_gry
 X_validation = X_validation_normalized_gry
 X_test = X_test_normalized_gry
 
-
-# In[78]:
 
 
 import tensorflow as tf
@@ -174,13 +124,7 @@ model.add(layers.Dropout(0.2))
 model.add(layers.Dense(43, activation='softmax'))
 
 
-# In[79]:
-
-
 model.summary()
-
-
-# In[80]:
 
 
 # specify optimizer, loss function and metric
@@ -191,9 +135,6 @@ model.compile(optimizer='adam',
 # training batch_size=128, epochs=10
 conv = model.fit(X_train, y_train, batch_size=128, epochs=10, 
                     validation_data=(X_validation, y_validation))
-
-
-# In[82]:
 
 
 acc = [conv.history['accuracy'], conv.history['val_accuracy']]
@@ -216,14 +157,7 @@ plt.title('Training and Validation Loss')
 plt.show()
 
 
-# In[54]:
-
-
 model.evaluate(x=X_test, y=y_test)
-
-
-# In[97]:
-
 
 # Save the entire model to a HDF5 file.
 model.save('traffic_sign_seq_highaccuracy')
@@ -237,4 +171,3 @@ im = X_test[index]
 fig, ax = plt.subplots()
 ax.set_title(sign.loc[sign['ClassId'] ==np.argmax(model.predict(np.array([im]))), 'SignName'].values[0])
 ax.imshow(im.squeeze(), cmap = 'gray')
-
